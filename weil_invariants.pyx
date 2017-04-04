@@ -473,8 +473,8 @@ cpdef cython_invariants(FQM, use_reduction = True, proof = False, checks = False
     if use_reduction and K == None:
         found = False
         p = FQM.level()
-	if p == 2:
-	    p = 5
+        if p == 2:
+            p = 5
         while not found:
             if p % FQM.level() == 1:
                 found = True
