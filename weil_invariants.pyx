@@ -51,9 +51,8 @@ r"""
 
 #from psage.modules.finite_quadratic_module import *
 
-#include "stdsage.pxi"
+#include "sage/ext/stdsage.pxi"
 #include "cysignals/signals.pxi"
-
 from cysignals.memory cimport sig_malloc, sig_realloc, sig_free
 from cysignals.signals cimport sig_error
 
@@ -97,7 +96,7 @@ cdef long* _elt(long ii, long *ed, int r) nogil:
     in a finite abelian group with elementary divisors specified by `ed`.
     """
     cdef long* eltl = NULL
-    eltl = <long*> sage_malloc(sizeof(long)*r)
+    eltl = <long*> sig_malloc(sizeof(long)*r)
     cdef long md = 1
     cdef long jj = 0
     cdef long c = 0
@@ -146,7 +145,7 @@ cdef long* Bl(long i, long **JJ, long *ed, int r) nogil:
     cdef long* ll = _elt(i, ed, r)
     cdef long ii, jj = 0
     cdef long* kk = NULL
-    kk = <long*> sage_malloc(sizeof(long)*r)
+    kk = <long*> sig_malloc(sizeof(long)*r)
     for ii in xrange(r):
         kk[ii] = 0
         for jj in xrange(r):
@@ -209,6 +208,8 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
         if debug > 0: print 'positive characteristic: ', q
         if 1 != q % l:
             raise ValueError( '%d must be = 1 modulo %d' %(q, l))
+        #if not q % 4 == 1:
+        #        raise ValueError( '%d must be = 1 modulo 4.' %(q))
         if not is_prime_power(l):
             raise NotImplementedError('This function can only be called with p-modules.')
 
@@ -283,10 +284,10 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
             w = K(FQM.order()).sqrt()
             if w.complex_embedding().real().sign() < 0:
                 w = -w
-            if 1 == s2: 
-                table = [s*((z**p) + (z**p).conjugate())/w for p in range(l)]
+            if 1 == s2:
+                table0 = [s*((z**p) + (z**p).conjugate())/w for p in range(l)]
             else:
-                table = [s*((z**p) - (z**p).conjugate())/w for p in range(l)]
+                table0 = [s*((z**p) - (z**p).conjugate())/w for p in range(l)]
         else:
             if K == QQbar:
                 if debug > 0: print 'QQbar'
@@ -299,17 +300,18 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
             else:
                 z = K(exp(2*pi*I/l))
             if 1 == s2: 
-                table = [2*s*(z**p).real()/w for p in range(l)]
+                table0 = [2*s*(z**p).real()/w for p in range(l)]
             else:
-                table = [s*(z**p-z**(-p))/w for p in range(l)]
-    if debug > 0: print len(table), [table[i] for i in range(l)]
+                table0 = [s*(z**p-z**(-p))/w for p in range(l)]
+    if debug > 0 and q>0: print len(table), [table[i] for i in range(l)]
+    if debug > 0 and q==0: print len(table0), table0
     if debug > 0: print '%f: init, table'%(walltime(t))
 
     if debug > 0: t = walltime()
     cdef long* ed = NULL
     fed = FQM.elementary_divisors()
     cdef int r = len(fed)
-    ed = <long*> sage_malloc(sizeof(long) * r)
+    ed = <long*> sig_malloc(sizeof(long) * r)
     if ed is NULL:
         raise MemoryError('Cannot allocate memory.')
     for i,d in enumerate(FQM.elementary_divisors()):
@@ -320,12 +322,12 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
     #sig_on()
     t = walltime()
     cdef long** JJ = NULL
-    JJ = <long**> sage_malloc(sizeof(long*) * r)
+    JJ = <long**> sig_malloc(sizeof(long*) * r)
     if JJ is NULL:
         raise MemoryError('Cannot allocate memory.')
     for i in xrange(r):
         JJ[i] = NULL
-        JJ[i] = <long*> sage_malloc(sizeof(long)*r)
+        JJ[i] = <long*> sig_malloc(sizeof(long)*r)
         if JJ[i] == NULL:
             raise MemoryError('Cannot allocate memory.')
         for j in xrange(r):
@@ -365,7 +367,7 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
 
     Ml.sort(norm_cmp)
     cdef long *Mli = NULL
-    Mli = <long*> sage_malloc(sizeof(long)*n)
+    Mli = <long*> sig_malloc(sizeof(long)*n)
     cdef long[:] Mlf = np.ndarray(n, dtype=int)
     for ii, xx in enumerate(Ml):
         Mli[ii] = xx[0]
@@ -380,12 +382,12 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
     cdef long** BB = NULL
     cdef long* Bli = NULL
 
-    BB = <long**> sage_malloc(sizeof(long*)*n)
+    BB = <long**> sig_malloc(sizeof(long*)*n)
     if BB is NULL:
         raise MemoryError('Cannot allocate memory.')
     for i in prange(ni, nogil=True):
         BB[i] = NULL
-        BB[i] = <long*> sage_malloc(sizeof(long)*(n-i))
+        BB[i] = <long*> sig_malloc(sizeof(long)*(n-i))
         #if BB[i] == NULL:
         #    raise MemoryError('Cannot allocate memory.')
         Bli = Bl(Mli[i], JJ, ed, r)
@@ -400,8 +402,8 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
     if not JJ is NULL:
         for i in range(r):
             if not JJ[i] is NULL:
-                sage_free(JJ[i])
-        sage_free(JJ)
+                sig_free(JJ[i])
+        sig_free(JJ)
      
     if debug > 0:
         print 'bilinear form computations: {0}'.format(walltime(t))
@@ -412,15 +414,20 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
     #cdef long[:,:] HH = A
     cdef H = Matrix(K,n,ni)
     cdef long p = 0
+    cdef tp = 0
     for j in xrange(ni):
         #print j, f
         for i in xrange(j, n):
             p = BB[j][i-j]
-            H[i,j] = table[p]*Mlf[j]
+            if q==0:
+                tp = table0[p]
+            else:
+                tp = table[p]
+            H[i,j] = tp*Mlf[j]
             if i==j:
                 H[j,j] += 2
             elif i<ni and i>j:
-                H[j,i] = table[p]*Mlf[i]
+                H[j,i] = tp*Mlf[i]
             #if debug > 1: print "i={0}, j={1}, H[i,j] = {2}, p = {3}".format(i,j,HH[i,j],p)
     if debug > 0: print '%f: init of H'%(walltime(t)); t = walltime()
     #if debug > 0: print A
@@ -461,8 +468,8 @@ cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H
     if not BB is NULL:
         for i in range(ni):
             if not BB[i] is NULL:
-                sage_free(BB[i])
-        sage_free(BB)
+                sig_free(BB[i])
+        sig_free(BB)
 
     return R
 
@@ -476,10 +483,8 @@ cpdef cython_invariants(FQM, use_reduction = True, proof = False, checks = False
     if use_reduction and K == None:
         found = False
         p = FQM.level()
-        if p == 2:
-            p = 5
         while not found:
-            if p % FQM.level() == 1:
+            if p % lcm(4,FQM.level()) == 1:
                 found = True
             else:
                 p = next_prime(p)
@@ -558,7 +563,7 @@ cpdef invariants(FQM, use_reduction = True, proof = False, checks=False, debug =
     cdef long* ed = NULL
     fed = FQM.elementary_divisors()
     cdef int r = len(fed)
-    ed = <long*> sage_malloc(sizeof(long) * r)
+    ed = <long*> sig_malloc(sizeof(long) * r)
     for i,d in enumerate(FQM.elementary_divisors()):
         ed[i] = long(d)
 
