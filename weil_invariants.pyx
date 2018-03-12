@@ -51,8 +51,11 @@ r"""
 
 #from psage.modules.finite_quadratic_module import *
 
-include "stdsage.pxi"
-include "cysignals/signals.pxi"
+#include "stdsage.pxi"
+#include "cysignals/signals.pxi"
+
+from cysignals.memory cimport sig_malloc, sig_realloc, sig_free
+from cysignals.signals cimport sig_error
 
 from sage.modules.free_module import span
 from sage.matrix.constructor import Matrix
