@@ -159,7 +159,7 @@ cdef long BBl(long j, long *Bi, long *ed, int r) nogil:
         res = res + Bi[ii]*ll[ii]
     return res
 
-cpdef cython_invariants_dim(FQM, use_reduction = True, proof = False, debug=1):
+cpdef cython_invariants_dim(FQM, use_reduction = True, proof = False, debug=0):
     if debug > 0:
         print "Computing invariants dimension of {}".format(FQM)
     if FQM.signature() % 2 != 0:
@@ -178,11 +178,11 @@ cpdef cython_invariants_dim(FQM, use_reduction = True, proof = False, debug=1):
             if dim == 0:
                 dim = cython_invariants_dim(N, use_reduction, proof, debug)
             else:
-                dim = dim*cython_invariants_dim(N, use_reduction ,proof, debug)
+                dim = dim*cython_invariants_dim(N, use_reduction, proof, debug)
             if dim == 0:
                 return 0
     else:
-        Sp = cython_invariants(FQM, use_reduction, proof, debug)[1]
+        Sp = cython_invariants(FQM, use_reduction=use_reduction, proof=proof, debug=debug)[1]
         dim = dim + Sp.dimension()
     return dim
 
