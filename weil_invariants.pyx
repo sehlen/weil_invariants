@@ -186,7 +186,7 @@ cpdef cython_invariants_dim(FQM, use_reduction = True, proof = False, debug=1):
         dim = dim + Sp.dimension()
     return dim
 
-cpdef cython_invariants_matrices(FQM, K = QQbar, proof = True, debug=0, return_H = False):
+cpdef cython_invariants_matrices(FQM, K = QQbar, proof = False, debug=0, return_H = False):
     cdef long i, j = 0
     cdef int l = long(FQM.level())
     cdef long n = long(FQM.order())
