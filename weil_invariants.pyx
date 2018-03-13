@@ -493,8 +493,9 @@ cpdef cython_invariants(FQM, use_reduction = True, proof = False, checks = False
     else:
         if K == None:
             K = CyclotomicField(lcm(8,FQM.level()))
-    #print K
+    if debug>0: print K, checks or proof
     I = cython_invariants_matrices(FQM, K, proof = checks or proof, debug=debug)
+    if debug>0: print I
     if type(I)==list or type(I) == tuple:
         if not proof or K.characteristic() == 0:
             Ml, ni, U, V = I
